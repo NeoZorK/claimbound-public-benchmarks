@@ -1,0 +1,61 @@
+{
+  "schema": "openwave_negative_result_summary_v1",
+  "domain": "NOAA_COOPS_D131",
+  "protocol_version": "1.0.139",
+  "source": {
+    "official_base_url": "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter",
+    "observed_product": "hourly_height",
+    "prediction_product": "predictions",
+    "datum": "MLLW",
+    "time_zone": "gmt",
+    "units": "metric",
+    "format": "json",
+    "period": "2018-01-01..2024-12-31",
+    "stations": ["8518750", "9414290", "8638610"],
+    "raw_payload_committed": false
+  },
+  "inputs": [
+    {
+      "station": "8518750",
+      "observed_sha256": "95d83d46262c5e2d5f109845d1f4afe8cd2b13e8c698cc74e78e89bc4e44c38f",
+      "predictions_sha256": "558d867acc2f2632bbc92e17cf7034b462bd27a8e562c08e685fa288bb4e0853",
+      "joined_rows": 61368
+    },
+    {
+      "station": "9414290",
+      "observed_sha256": "5c2959bd1a194ce6659600dab805d016942e86e41f7c7e47ec6a084c16e2f26a",
+      "predictions_sha256": "c14973f96a72ac75b20e39a0c95212b5ee21807fa42060633e53a914d6b1bcab",
+      "joined_rows": 56424
+    },
+    {
+      "station": "8638610",
+      "observed_sha256": "23b1c273a66fb1c262229d86f2cab8fce71fc5693ee013936cf079b48b5b44c7",
+      "predictions_sha256": "211014d4b9de82d8a7cf3e616457f4edd122b912763afb860db74387c9abf9ef",
+      "joined_rows": 61368
+    }
+  ],
+  "report_sha256": "87d4d51f134f88c558235efaa3499e8b8bbac1cfc7051189f4954302c61295b6",
+  "external_payload_manifest_sha256": "cd46899966ec855bc91b5c575d4713c068f320d41cb07e9c1a91b5190cbe4a67",
+  "result": {
+    "source_audit_passed": true,
+    "eligible_station_count": 3,
+    "eligible_windows": 11,
+    "overall_go_no_go": false,
+    "result_status": "NEGATIVE_RESULT_UNDER_PROTOCOL"
+  },
+  "failed_gates": [
+    "seasonal hour-of-year residual control was not beaten",
+    "event rate below minimum in one window",
+    "event rate above maximum in one window"
+  ],
+  "claim_boundary": {
+    "allowed": "executed under a frozen protocol and recorded as NEGATIVE_RESULT_UNDER_PROTOCOL",
+    "forbidden": [
+      "accepted by protocol",
+      "coastal-warning performance proven",
+      "universal forecasting edge",
+      "deployment readiness",
+      "all statistical methods beaten"
+    ]
+  }
+}

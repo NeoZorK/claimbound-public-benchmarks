@@ -1,0 +1,30 @@
+{
+  "schema": "openwave_source_boundary_summary_v1",
+  "domain": "CDC_MIRROR_PATH",
+  "source_path": "public mirror route",
+  "regions": ["NATIONAL", "REGION_4", "REGION_9"],
+  "rows_per_region": 430,
+  "windows_per_region": 5,
+  "raw_payload_committed": false,
+  "report_sha256": "a15681422c1126db62e58c45c4e3fd2393993be471bc8ade42aec54ddb4e8ed3",
+  "result": {
+    "overall_go_no_go": false,
+    "result_status": "BLOCKED_SOURCE",
+    "source_boundary": "direct export or accepted equivalence record required"
+  },
+  "methodology_value": [
+    "source lineage can block a claim even when a public data pipeline runs end to end",
+    "source eligibility is separate from statistical acceptance",
+    "negative or blocked outcomes remain first-class evidence"
+  ],
+  "claim_boundary": {
+    "allowed": "mirror proof path completed; positive external claim remains blocked by source-equivalence requirements",
+    "forbidden": [
+      "direct official export equivalence proven",
+      "public-health readiness",
+      "positive empirical pass",
+      "universal forecasting edge",
+      "deployment readiness"
+    ]
+  }
+}

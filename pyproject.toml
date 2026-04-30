@@ -1,6 +1,6 @@
 [project]
 name = "openwave-public-benchmarks"
-version = "0.1.1"
+version = "0.2.0"
 description = "Open Wave public benchmark foreground for pre-registered public time-series evaluation"
 requires-python = ">=3.12"
 dependencies = [

@@ -16,12 +16,22 @@ The project focuses on reproducibility discipline:
 
 ## Current Evidence
 
-The current public evidence contains one narrow positive result:
+The current public evidence contains one narrow positive result and multiple
+negative or source-blocked records:
 
 ```text
 NASA POWER D-103 passed the pre-registered gate under protocol 1.0.143 and was
 independently reproduced at outcome/gate level on 2026-04-29.
 ```
+
+Additional records show source lineage and negative/blocked outcomes:
+
+- NOAA CO-OPS D-131: official-source run completed; statistical acceptance did
+  not pass.
+- NYC TLC Phase 4: official-source run completed; statistical acceptance did
+  not pass.
+- CDC mirror path: public mirror proof path completed, but external source
+  equivalence remained unresolved.
 
 This does not imply a universal forecasting edge, deployment readiness, or
 superiority over all statistical methods.

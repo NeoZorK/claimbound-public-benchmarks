@@ -1,0 +1,50 @@
+{
+  "schema": "openwave_negative_result_summary_v1",
+  "domain": "NYC_TLC_PHASE4",
+  "source": {
+    "source_family": "NYC TLC official-source yellow taxi trip records",
+    "aggregation": "hourly pickup summaries",
+    "period": "2023",
+    "scopes": ["MANHATTAN", "BROOKLYN", "QUEENS"],
+    "raw_payload_committed": false
+  },
+  "inputs": [
+    {
+      "scope": "MANHATTAN",
+      "rows": 8760,
+      "sha256": "88d1f789fab56cfaeaed079302f5c59998f068768767b389ab906cb26193aa64"
+    },
+    {
+      "scope": "BROOKLYN",
+      "rows": 8760,
+      "sha256": "f2a933fbf87921f6e9fdeac9f85b2c9299e6aeb4d64ac599288c606e3dcdedd4"
+    },
+    {
+      "scope": "QUEENS",
+      "rows": 8760,
+      "sha256": "cefcaf54d9aa26fe6543bcab80846ce339f06cd7a792d3989103d23cf30457ac"
+    }
+  ],
+  "report_sha256": "c92b5fbd68c2391e0202b9c6840159679f32ed8c6c53288677f8e8d79bf253a8",
+  "result": {
+    "source_audit_passed": true,
+    "windows": 45,
+    "event_rate_in_range_windows": 32,
+    "overall_go_no_go": false,
+    "result_status": "NEGATIVE_RESULT_UNDER_PROTOCOL"
+  },
+  "failed_gates": [
+    "candidate did not pass every required control",
+    "shuffled control comparison did not meet the frozen positive-rate gate"
+  ],
+  "claim_boundary": {
+    "allowed": "official-source proof-of-work completed; source audit passed and statistical acceptance failed",
+    "forbidden": [
+      "evidence passed",
+      "universal forecasting edge",
+      "transport deployment readiness",
+      "public-health or energy claims from this evidence",
+      "near miss equals success"
+    ]
+  }
+}
