@@ -1,6 +1,6 @@
 [project]
 name = "openwave-public-benchmarks"
-version = "0.1.0"
+version = "0.1.1"
 description = "Open Wave public benchmark foreground for pre-registered public time-series evaluation"
 requires-python = ">=3.12"
 dependencies = [
@@ -22,4 +22,3 @@ packages = ["src/openwave_public_benchmarks"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-

@@ -50,5 +50,16 @@
     "not operational deployment evidence",
     "not machine-learning evidence",
     "independent reproduction/audit recommended"
-  ]
+  ],
+  "claim_boundary": {
+    "allowed": "passed the pre-registered NASA POWER D-103 gate under protocol 1.0.143",
+    "forbidden": [
+      "raw payload hash reproduced exactly",
+      "broad or universal forecasting edge",
+      "deployment readiness",
+      "all statistical methods beaten",
+      "private-background performance",
+      "machine-learning breakthrough"
+    ]
+  }
 }

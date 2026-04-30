@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import ast
+import json
 import re
 from pathlib import Path
 
@@ -26,6 +27,8 @@ FORBIDDEN_IMPORT_PREFIXES = (
 )
 
 TEXT_SUFFIXES = {".py", ".md", ".toml", ".txt", ".json", ".yml", ".yaml"}
+RAW_PAYLOAD_SUFFIXES = {".csv", ".parquet", ".zip", ".jsonl", ".env", ".key", ".pem"}
+RAW_PAYLOAD_DIR_NAMES = {"raw", "payloads", "data"}
 
 
 def _text_files() -> list[Path]:
@@ -70,4 +73,30 @@ def test_python_imports_stay_inside_open_foreground() -> None:
             for module in modules:
                 if any(module == prefix or module.startswith(f"{prefix}.") for prefix in FORBIDDEN_IMPORT_PREFIXES):
                     violations.append(f"{path.relative_to(REPO_ROOT)} imports {module}")
+    assert violations == []
+
+
+def test_no_raw_payload_files_or_dirs_are_committed() -> None:
+    violations: list[str] = []
+    for path in REPO_ROOT.rglob("*"):
+        if any(part in {".git", ".venv", ".pytest_cache", "__pycache__", "dist", "build"} for part in path.parts):
+            continue
+        if path.is_dir():
+            if path.name.lower() in RAW_PAYLOAD_DIR_NAMES:
+                violations.append(f"{path.relative_to(REPO_ROOT)}: raw payload directory")
+            continue
+        if path.suffix.lower() in RAW_PAYLOAD_SUFFIXES:
+            violations.append(f"{path.relative_to(REPO_ROOT)}: raw payload-like suffix")
+    assert violations == []
+
+
+def test_public_artifacts_have_claim_boundary_and_no_raw_payloads() -> None:
+    violations: list[str] = []
+    for path in sorted((REPO_ROOT / "artifacts").glob("*.json")):
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if "claim_boundary" not in data:
+            violations.append(f"{path.relative_to(REPO_ROOT)}: missing claim_boundary")
+        text = json.dumps(data, sort_keys=True).lower()
+        if '"raw_payload_committed": true' in text:
+            violations.append(f"{path.relative_to(REPO_ROOT)}: raw_payload_committed true")
     assert violations == []

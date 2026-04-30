@@ -3,6 +3,9 @@
 Open Wave Public Benchmarks is an open-source foreground for pre-registered
 public time-series evaluation.
 
+It is not a production forecasting service. It is a public toolkit for checking
+whether a narrow time-series claim was tested under rules fixed before the run.
+
 The project focuses on reproducibility discipline:
 
 - source eligibility is checked before a real run;
@@ -23,6 +26,20 @@ independently reproduced at outcome/gate level on 2026-04-29.
 This does not imply a universal forecasting edge, deployment readiness, or
 superiority over all statistical methods.
 
+## How The Pipeline Works
+
+```text
+official public source
+  -> local raw payload outside this repository
+  -> parser and source manifest
+  -> pre-registered runner
+  -> baseline and control comparison
+  -> result status and sanitized evidence summary
+```
+
+Result statuses are defined in [docs/RESULT_STATUS.md](docs/RESULT_STATUS.md).
+Claim boundaries are defined in [docs/CLAIMS.md](docs/CLAIMS.md).
+
 ## Install
 
 ```bash
@@ -41,6 +58,19 @@ The real NASA POWER payload files used for the recorded D-103 run are not
 committed. Reproduction requires downloading fresh official NASA POWER Daily
 JSON payloads outside the repository and recording their hashes.
 
+Detailed reproduction instructions are in
+[docs/REPRODUCTION.md](docs/REPRODUCTION.md).
+
+## Manual Domain Track
+
+A future public-domain manual track template is included for European air
+quality data:
+
+[docs/manual_audit/EEA_AQ_D001_MANUAL_TRACK.md](docs/manual_audit/EEA_AQ_D001_MANUAL_TRACK.md)
+
+This template is designed for a no-AI operator audit: rules first, then source
+download, then run, then publish the exact result status.
+
 ## Boundary
 
 This repository is independently usable as an open benchmark foreground. It does
@@ -49,4 +79,3 @@ not include, import, or require private background technology.
 ## License
 
 Apache-2.0. See [LICENSE](LICENSE).
-
