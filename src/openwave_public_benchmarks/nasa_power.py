@@ -241,8 +241,6 @@ def write_nasa_power_manifest(
             "not establish a positive empirical claim"
         ),
     }
-    if license_note:
-        manifest["license_note"] = license_note
     out_path = (
         Path(manifest_path)
         if manifest_path is not None
