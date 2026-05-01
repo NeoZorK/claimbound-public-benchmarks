@@ -98,7 +98,8 @@ Detailed reproduction instructions are in
 Future public-domain track runbooks are included for European air quality data:
 
 - [No-AI manual track](docs/manual_audit/EEA_AQ_D001_MANUAL_TRACK.md)
-- [AI-assisted manual track](docs/manual_audit/EEA_AQ_D001_AI_ASSISTED_TRACK.md)
+- [AI-assisted autonomous prompt](docs/manual_audit/EEA_AQ_D001_AI_ASSISTED_TRACK.md)
+- [Hybrid human-plus-AI track](docs/manual_audit/EEA_AQ_D001_HYBRID_AI_ASSISTED_TRACK.md)
 
 These runbooks are designed for operator audits: rules first, then source
 download, then run, then publish the exact result status.

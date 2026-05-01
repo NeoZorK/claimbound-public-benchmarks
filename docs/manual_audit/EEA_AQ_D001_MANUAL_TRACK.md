@@ -11,6 +11,52 @@ model superiority.
 General manual audit rules are defined in
 [docs/MANUAL_AUDIT_PROTOCOL.md](../MANUAL_AUDIT_PROTOCOL.md).
 
+## Exact Files Used By This Run
+
+This runbook uses exact files. When a step says "record", "copy", or "write",
+put the value into one of these files, not into an unnamed scratch note.
+
+```text
+$RUN_ROOT/logs/operator_log.md
+  Main human-readable run log. Put source notes, download notes, processing
+  notes, status decision, deviations and limitations here.
+
+$RUN_ROOT/logs/run_env.sh
+  Shell variables that let you reopen a terminal and continue the same run.
+
+$RUN_ROOT/logs/protocol_lock.txt
+  Frozen protocol. Create it before data inspection and do not edit it after
+  hashing.
+
+$RUN_ROOT/hashes/protocol_lock.sha256
+  SHA-256 hash of the frozen protocol.
+
+$RUN_ROOT/hashes/raw_payloads.sha256
+  SHA-256 hashes of raw payload files stored outside the repository.
+
+$RUN_ROOT/hashes/raw_payloads_manifest.sha256
+  SHA-256 hash of the raw-payload hash manifest.
+
+$RUN_ROOT/reports/station_coverage.csv
+  Local detailed coverage table. Do not commit this unless it has been reviewed
+  and intentionally sanitized.
+
+$RUN_ROOT/reports/selected_sampling_points.csv
+  Local selected sampling points table. Do not commit this unless it has been
+  reviewed and intentionally sanitized.
+
+$RUN_ROOT/reports/eea_aq_d001_manual_summary.json
+  Sanitized summary that may be copied into the public repository after review.
+```
+
+If you close the terminal and come back later, reload the run variables with:
+
+```bash
+source "$HOME/claimbound_runs/REPLACE-WITH-FOLDER/logs/run_env.sh"
+```
+
+Replace `REPLACE-WITH-FOLDER` with the folder name printed by step 27.
+
 ## 0. Fixed Scope
 
 Do not change these fields after starting the run log.
@@ -76,52 +122,64 @@ vocabulary, and parquet schema.
 ## 2. Before You Start
 
 1. Open a terminal.
-2. Go to the public repository.
+2. Go to the public repository. This command makes the repository your current
+   working folder.
 
    ```bash
    cd /path/to/claimbound-public-benchmarks
    ```
 
-3. Confirm that the repository is clean.
+3. Save the repository path in a shell variable. This lets later commands
+   return to the exact public repository.
+
+   ```bash
+   CLAIMBOUND_REPO="$(pwd -P)"
+   printf 'CLAIMBOUND_REPO=%s\n' "$CLAIMBOUND_REPO"
+   ```
+
+4. Confirm that the repository is clean.
 
    ```bash
    git status --short --branch
    ```
 
-4. Expected output shape:
+5. Expected output shape:
 
    ```text
    ## main...origin/main
    ```
 
-5. If there are uncommitted changes, stop.
-6. Do not mix this manual run with unrelated edits.
-7. Confirm the current commit.
+6. If there are uncommitted changes, stop.
+7. Do not mix this manual run with unrelated edits.
+8. Confirm the current commit and store it in a variable.
 
    ```bash
-   git rev-parse --short HEAD
+   STARTING_GIT_COMMIT="$(git rev-parse --short HEAD)"
+   printf 'STARTING_GIT_COMMIT=%s\n' "$STARTING_GIT_COMMIT"
    ```
 
-8. Copy the short commit into your notes as `starting_git_commit`.
-9. Confirm Python is available.
+9. Confirm Python is available. This command prints the local Python version.
 
    ```bash
    python3 --version
    ```
 
-10. Confirm checksum tooling is available.
+10. Confirm checksum tooling is available. This command hashes `README.md`
+    without changing it.
 
     ```bash
     shasum -a 256 README.md | head -1
     ```
 
-11. Confirm the current date.
+11. Store the current UTC timestamp in a variable.
 
     ```bash
-    date -u +"%Y-%m-%dT%H:%M:%SZ"
+    RUN_STARTED_UTC="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+    printf 'RUN_STARTED_UTC=%s\n' "$RUN_STARTED_UTC"
     ```
 
-12. Write the UTC timestamp into your notes as `run_started_utc`.
+12. Do not write these values into the public repository. They will be written
+    into `$RUN_ROOT/logs/operator_log.md` after the run folder is created.
 
 ## 3. Execution Mode Declaration
 
@@ -150,7 +208,8 @@ Starting git commit:
 Raw files must stay outside the public repository.
 
 20. Choose a run date in `YYYYMMDD` format.
-21. Create a run root outside the repo.
+21. Create a run root outside the repo. This command creates the folder tree
+    that will hold raw downloads, logs, hashes, scripts and reports.
 
     ```bash
     RUN_ID="eea_aq_d001_$(date -u +%Y%m%d)"
@@ -159,21 +218,47 @@ Raw files must stay outside the public repository.
     printf '%s\n' "$RUN_ROOT"
     ```
 
-22. Copy the printed path into your notes as `external_run_root`.
-23. Confirm you are not inside the public repo.
+22. Create a reusable environment file. This file lets you restore variables if
+    the terminal is closed.
+
+    ```bash
+    cat > "$RUN_ROOT/logs/run_env.sh" <<EOF
+    export CLAIMBOUND_REPO="$CLAIMBOUND_REPO"
+    export RUN_ID="$RUN_ID"
+    export RUN_ROOT="$RUN_ROOT"
+    export STARTING_GIT_COMMIT="$STARTING_GIT_COMMIT"
+    export RUN_STARTED_UTC="$RUN_STARTED_UTC"
+    EOF
+    ```
+
+23. Print the environment file. Confirm that paths are correct.
+
+    ```bash
+    cat "$RUN_ROOT/logs/run_env.sh"
+    ```
+
+24. Confirm you are still inside the public repository before creating public
+    files.
 
     ```bash
     pwd
     ```
 
-24. Go back to the public repo only when editing public sanitized files.
-25. Keep browser downloads in `$RUN_ROOT/downloads`.
-26. Move raw downloaded files into `$RUN_ROOT/raw`.
-27. Never commit files from `$RUN_ROOT/raw`.
+25. If `pwd` does not print the same path as `$CLAIMBOUND_REPO`, return to the
+    public repository.
+
+    ```bash
+    cd "$CLAIMBOUND_REPO"
+    ```
+
+26. Keep browser downloads in `$RUN_ROOT/downloads`.
+27. Move raw downloaded files into `$RUN_ROOT/raw`.
+28. Never commit files from `$RUN_ROOT/raw`.
 
 ## 5. Create The Run Log
 
-28. Create the run log.
+29. Create the run log. This command writes the main log file at the exact path
+    `$RUN_ROOT/logs/operator_log.md`.
 
     ```bash
     cat > "$RUN_ROOT/logs/operator_log.md" <<'EOF'
@@ -239,30 +324,119 @@ Raw files must stay outside the public repository.
     EOF
     ```
 
-29. Open the run log in your editor.
-30. Fill `Operator`.
-31. Fill `Execution mode`.
-32. Fill `Run started UTC`.
-33. Fill `Starting git commit`.
-34. Fill `External run root`.
-35. Save the file.
+30. Append the values already collected by commands. Replace
+    `YOUR_PUBLIC_OPERATOR_NAME` before running the command.
 
-## 6. Manual Source-Rights Audit
+    ```bash
+    OPERATOR_NAME="YOUR_PUBLIC_OPERATOR_NAME"
+    EXECUTION_MODE="MANUAL_NO_AI"
+    {
+      printf '\n## Command-Filled Run Values\n\n'
+      printf 'Operator: %s\n' "$OPERATOR_NAME"
+      printf 'Execution mode: %s\n' "$EXECUTION_MODE"
+      printf 'Run started UTC: %s\n' "$RUN_STARTED_UTC"
+      printf 'Starting git commit: %s\n' "$STARTING_GIT_COMMIT"
+      printf 'External run root: %s\n' "$RUN_ROOT"
+      printf 'Public repository: %s\n' "$CLAIMBOUND_REPO"
+    } >> "$RUN_ROOT/logs/operator_log.md"
+    ```
 
-36. Open the EEA AQ Portal download page in a browser.
-37. Confirm that it links to the Air Quality Download service.
-38. Open the Air Quality Download web application.
-39. Open the documentation PDF.
-40. Open the EEA copyright notice.
-41. Open the EEA reuse FAQ.
-42. Read the pages manually.
-43. In `operator_log.md`, record whether sanitized public summaries are allowed.
-44. In `operator_log.md`, record that raw payload files will not be committed.
-45. If reuse terms are unavailable, ambiguous, or contradictory, stop.
-46. If blocked by rights uncertainty, set candidate status to `BLOCKED_SOURCE`.
-47. If blocked, skip to section 18 and create a blocked summary.
+31. Open the run log and verify that the appended values are visible.
 
-## 7. Download Method A: Web Application
+    ```bash
+    open -e "$RUN_ROOT/logs/operator_log.md"
+    ```
+
+32. If `open -e` is unavailable, use this terminal editor command.
+
+    ```bash
+    nano "$RUN_ROOT/logs/operator_log.md"
+    ```
+
+33. Save the file.
+
+## 6. Freeze The Protocol
+
+34. Create a protocol lock file. This is the exact fixed protocol for the run.
+
+    ```bash
+    cat > "$RUN_ROOT/logs/protocol_lock.txt" <<'EOF'
+    Track ID: EEA_AQ_D001
+    Claim type: source audit
+    Official source: EEA Air Quality Download Service
+    Dataset: verified E1a data
+    Pollutant: PM10
+    Countries: NL, BE, DE
+    Period: 2018-01-01 through 2024-12-31
+    Aggregation: daily records
+    Coverage gate: at least 85 percent daily coverage per sampling point
+    Selection rule: first five eligible sampling points per country after sorting by country code, city/locality if available, and sampling point ID
+    Raw payload policy: raw files stay outside this repository
+    Public output policy: commit only sanitized summary, evidence card, and card SVG
+    Execution mode: MANUAL_NO_AI
+    EOF
+    ```
+
+35. Hash the protocol lock. This proves which protocol text was frozen before
+    source or outcome inspection.
+
+    ```bash
+    shasum -a 256 "$RUN_ROOT/logs/protocol_lock.txt" > "$RUN_ROOT/hashes/protocol_lock.sha256"
+    cat "$RUN_ROOT/hashes/protocol_lock.sha256"
+    ```
+
+36. Append the protocol-lock hash to the operator log.
+
+    ```bash
+    {
+      printf '\n## Protocol Lock\n\n'
+      printf 'Protocol lock file: %s\n' "$RUN_ROOT/logs/protocol_lock.txt"
+      printf 'Protocol lock SHA-256: '
+      awk '{print $1}' "$RUN_ROOT/hashes/protocol_lock.sha256"
+    } >> "$RUN_ROOT/logs/operator_log.md"
+    ```
+
+## 7. Manual Source-Rights Audit
+
+37. Open the EEA AQ Portal download page in a browser.
+38. Confirm that it links to the Air Quality Download service.
+39. Open the Air Quality Download web application.
+40. Open the documentation PDF.
+41. Open the EEA copyright notice.
+42. Open the EEA reuse FAQ.
+43. Read the pages manually.
+44. Append the exact official source links to the operator log.
+
+    ```bash
+    {
+      printf '\n## Official Source Links Checked\n\n'
+      printf 'Download page: %s\n' 'https://aqportal.discomap.eea.europa.eu/download-data/'
+      printf 'Web application: %s\n' 'https://eeadmz1-downloads-webapp.azurewebsites.net/'
+      printf 'API Swagger: %s\n' 'https://eeadmz1-downloads-api-appservice.azurewebsites.net/swagger/index.html'
+      printf 'Documentation PDF: %s\n' 'https://eeadmz1-downloads-webapp.azurewebsites.net/content/documentation/How_To_Downloads.pdf'
+      printf 'Copyright notice: %s\n' 'https://www.eea.europa.eu/en/about/policy/copyright'
+      printf 'Reuse FAQ: %s\n' 'https://www.eea.europa.eu/en/about/contact-us/faqs/can-i-use-eea-content-in-my-work-or-in-my-organisations-products'
+    } >> "$RUN_ROOT/logs/operator_log.md"
+    ```
+
+45. Append the source-rights decision. Replace the placeholder text before
+    running the command.
+
+    ```bash
+    SOURCE_RIGHTS_DECISION="REPLACE_WITH_ALLOWED_OR_BLOCKED_AND_REASON"
+    {
+      printf '\n## Source Rights Decision\n\n'
+      printf 'Sanitized public summaries allowed: %s\n' "$SOURCE_RIGHTS_DECISION"
+      printf 'Raw payload files committed: no\n'
+      printf 'Raw payload policy: raw files remain under %s/raw\n' "$RUN_ROOT"
+    } >> "$RUN_ROOT/logs/operator_log.md"
+    ```
+
+46. If reuse terms are unavailable, ambiguous, or contradictory, stop.
+47. If blocked by rights uncertainty, set candidate status to `BLOCKED_SOURCE`.
+48. If blocked, skip to section 19 and create a blocked summary.
+
+## 8. Download Method A: Web Application
 
 Use this method first. Use Method B only if the web UI fails or you need a
 repeatable API fallback.
@@ -287,20 +461,61 @@ repeatable API fallback.
 65. Leave city blank.
 66. Leave email blank unless you want to provide one.
 67. If there is a `Summary` button, click it before downloading.
-68. Copy the summary count and size into `operator_log.md`.
+68. Copy the summary count and size into `operator_log.md` with this command.
+    Replace the placeholder values with what the web application shows.
+
+    ```bash
+    WEBAPP_SUMMARY_COUNT="REPLACE_WITH_UI_COUNT"
+    WEBAPP_SUMMARY_SIZE="REPLACE_WITH_UI_SIZE"
+    {
+      printf '\n## Web Application Summary\n\n'
+      printf 'Summary count: %s\n' "$WEBAPP_SUMMARY_COUNT"
+      printf 'Summary size: %s\n' "$WEBAPP_SUMMARY_SIZE"
+    } >> "$RUN_ROOT/logs/operator_log.md"
+    ```
+
 69. If the UI says the request is too large, select the option for list of URLs.
 70. If the UI offers parquet download directly and size is acceptable, keep it.
 71. Click `Download`.
 72. Wait until the browser finishes downloading.
-73. If a ZIP is downloaded, move it into `$RUN_ROOT/raw`.
+73. If a ZIP is downloaded to your default `Downloads` folder, move it into
+    `$RUN_ROOT/raw`. Replace the filename before running this command.
+
+    ```bash
+    mv "$HOME/Downloads/REPLACE_WITH_DOWNLOADED_FILE.zip" "$RUN_ROOT/raw/"
+    ```
+
 74. If a CSV list of URLs is downloaded, move it into `$RUN_ROOT/downloads`.
+    Replace the filename before running this command.
+
+    ```bash
+    mv "$HOME/Downloads/REPLACE_WITH_DOWNLOADED_URL_LIST.csv" "$RUN_ROOT/downloads/"
+    ```
+
 75. If the browser downloads multiple parquet files, move them into
-    `$RUN_ROOT/raw`.
+    `$RUN_ROOT/raw`. Replace the pattern if the downloaded filenames are
+    different.
+
+    ```bash
+    mv "$HOME"/Downloads/*.parquet "$RUN_ROOT/raw/"
+    ```
+
 76. Record every downloaded filename in `operator_log.md`.
+
+    ```bash
+    {
+      printf '\n## Downloaded Files Stored Outside Repository\n\n'
+      printf 'Raw folder: %s/raw\n' "$RUN_ROOT"
+      find "$RUN_ROOT/raw" -maxdepth 1 -type f -print | sort
+      printf '\nDownload helper folder: %s/downloads\n' "$RUN_ROOT"
+      find "$RUN_ROOT/downloads" -maxdepth 1 -type f -print | sort
+    } >> "$RUN_ROOT/logs/operator_log.md"
+    ```
+
 77. If nothing downloads after two attempts, do not keep clicking randomly.
 78. Switch to Method B.
 
-## 8. Download Method B: API Swagger Fallback
+## 9. Download Method B: API Swagger Fallback
 
 79. Open the API Swagger page.
 80. Find the endpoint group for parquet files.
@@ -314,15 +529,36 @@ repeatable API fallback.
 88. Use end `2024-12-31T23:59:59Z` if the endpoint accepts it.
 89. Use daily type if the endpoint exposes a type or frequency field.
 90. Click `Execute`.
-91. Copy the request URL or request body into `operator_log.md`.
-92. Copy the HTTP status code into `operator_log.md`.
+91. Copy the request URL or request body into `operator_log.md`. Replace the
+    placeholder before running the command.
+
+    ```bash
+    API_REQUEST_USED="REPLACE_WITH_SWAGGER_REQUEST_URL_OR_BODY"
+    printf '\nAPI request used: %s\n' "$API_REQUEST_USED" >> "$RUN_ROOT/logs/operator_log.md"
+    ```
+
+92. Copy the HTTP status code into `operator_log.md`. Replace the placeholder
+    before running the command.
+
+    ```bash
+    API_HTTP_STATUS="REPLACE_WITH_HTTP_STATUS"
+    printf 'API HTTP status: %s\n' "$API_HTTP_STATUS" >> "$RUN_ROOT/logs/operator_log.md"
+    ```
+
 93. If the endpoint returns URLs, copy them into a local text file:
 
     ```bash
     touch "$RUN_ROOT/downloads/parquet_urls.txt"
+    open -e "$RUN_ROOT/downloads/parquet_urls.txt"
     ```
 
-94. Paste one URL per line into `parquet_urls.txt`.
+94. Paste one URL per line into `parquet_urls.txt`, save the file, then verify
+    the saved URL count.
+
+    ```bash
+    wc -l "$RUN_ROOT/downloads/parquet_urls.txt"
+    ```
+
 95. Download the URL list.
 
     ```bash
@@ -335,10 +571,23 @@ repeatable API fallback.
     ```
 
 96. If the API returns a ZIP URL, download the ZIP into `$RUN_ROOT/raw`.
-97. If the API returns an error, record the response.
+    Replace the placeholder URL before running the command.
+
+    ```bash
+    curl -L --fail --retry 3 --output "$RUN_ROOT/raw/eea_aq_d001_api_payload.zip" "REPLACE_WITH_ZIP_URL"
+    ```
+
+97. If the API returns an error, record the response. Replace the placeholder
+    text before running the command.
+
+    ```bash
+    API_ERROR_RESPONSE="REPLACE_WITH_API_ERROR_TEXT"
+    printf 'API error response: %s\n' "$API_ERROR_RESPONSE" >> "$RUN_ROOT/logs/operator_log.md"
+    ```
+
 98. If both Method A and Method B fail, set candidate status to `BLOCKED_SOURCE`.
 
-## 9. Freeze The Raw Payload Set
+## 10. Freeze The Raw Payload Set
 
 99. List raw files.
 
@@ -374,7 +623,7 @@ repeatable API fallback.
      manifest reference.
 106. Do not copy raw payloads into the public repository.
 
-## 10. Prepare Local Processing Environment
+## 11. Prepare Local Processing Environment
 
 107. Create a local virtual environment outside the repo.
 
@@ -401,7 +650,7 @@ repeatable API fallback.
 
 109. Copy those versions into `operator_log.md`.
 
-## 11. Create The Inspection Script
+## 12. Create The Inspection Script
 
 110. Create the script.
 
@@ -620,7 +869,7 @@ repeatable API fallback.
      read the documented source format.
 113. If you edit the script, record the reason in `operator_log.md`.
 
-## 12. Run The Inspection Script
+## 13. Run The Inspection Script
 
 114. Run it.
 
@@ -663,12 +912,12 @@ repeatable API fallback.
 125. If the downloaded source format cannot be parsed without changing the
      protocol, choose `BLOCKED_SOURCE`.
 
-## 13. Manual Result Decision
+## 14. Manual Result Decision
 
 126. Open the generated summary JSON.
 
      ```bash
-     python -m json.tool "$RUN_ROOT/reports/eea_aq_d001_manual_summary.json" | less
+     python3 -m json.tool "$RUN_ROOT/reports/eea_aq_d001_manual_summary.json" | less
      ```
 
 127. Read `result.result_status`.
@@ -688,7 +937,7 @@ repeatable API fallback.
 140. Write the reason into `operator_log.md`.
 141. Write any deviations into `operator_log.md`.
 
-## 14. Create Public Sanitized Summary
+## 15. Create Public Sanitized Summary
 
 142. Go to the public repository.
 
@@ -720,7 +969,7 @@ repeatable API fallback.
 
 150. Copy this hash into `operator_log.md`.
 
-## 15. Create The Evidence Card JSON
+## 16. Create The Evidence Card JSON
 
 151. Choose the current date in `YYYY-MM-DD` format.
 152. Set `CARD_DATE` to that date.
@@ -798,7 +1047,7 @@ repeatable API fallback.
 159. Fix only validation errors.
 160. Do not change the result status to make the validator pass.
 
-## 16. Create The Visual SVG Card
+## 17. Create The Visual SVG Card
 
 161. Copy the SVG template.
 
@@ -839,7 +1088,7 @@ repeatable API fallback.
 169. Confirm the status matches the JSON card.
 170. Confirm there is no broader claim than the JSON card.
 
-## 17. Update The Registry Index
+## 18. Update The Registry Index
 
 171. Open `docs/registry/evidence_index.json`.
 172. Add a new entry for the EEA card under `cards`.
@@ -860,7 +1109,7 @@ repeatable API fallback.
      python3 -m json.tool docs/registry/evidence_index.json >/tmp/claimbound_registry_check.json
      ```
 
-## 18. If The Track Is Blocked
+## 19. If The Track Is Blocked
 
 185. Do not delete the failed notes.
 186. Create a sanitized blocked summary JSON.
@@ -873,7 +1122,7 @@ repeatable API fallback.
 193. Validate the card.
 194. A blocked card is a valid ClaimBound result.
 
-## 19. Final Local Checks
+## 20. Final Local Checks
 
 195. Run tests.
 
@@ -905,7 +1154,7 @@ repeatable API fallback.
 
 203. Confirm only intended public files changed.
 
-## 20. Commit And Pull Request
+## 21. Commit And Pull Request
 
 204. Stage the sanitized public files.
 
@@ -956,7 +1205,7 @@ repeatable API fallback.
 214. Do not change the result status just to pass checks.
 215. Merge only after checks pass.
 
-## 21. Final Review Questions
+## 22. Final Review Questions
 
 Before merging, answer these questions:
 
@@ -974,7 +1223,7 @@ Before merging, answer these questions:
 227. If the result is negative or blocked, is it recorded without shame?
 228. If the result passed, are the limitations still visible?
 
-## 22. What To Share
+## 23. What To Share
 
 Share these public links after merge:
 
